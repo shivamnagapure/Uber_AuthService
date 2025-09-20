@@ -6,6 +6,7 @@ import UberProject_AuthService.mapper.PassengerMapper;
 import UberProject_AuthService.models.Passenger;
 import UberProject_AuthService.repository.PassengerRepository;
 import org.mapstruct.factory.Mappers;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,21 +14,23 @@ public class AuthService {
 
     private final PassengerMapper passengerMapper = Mappers.getMapper(PassengerMapper.class);
 
+    private final BCryptPasswordEncoder bCryptPasswordEncoder ;
     PassengerRepository passengerRepository ;
 
-    public AuthService(PassengerRepository passengerRepository){
+    public AuthService(PassengerRepository passengerRepository , BCryptPasswordEncoder bCryptPasswordEncoder){
         this.passengerRepository = passengerRepository ;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder ;
     }
 
     public PassengerSignUpResponseDto signUpPassenger(PassengerSignupRequestDto passengerSignupRequestDto){
-        System.out.println(passengerSignupRequestDto.getEmail() + "1");
         // map Request DTO → Entity
         Passenger passenger = passengerMapper.passengerSignUpReqToPassenger(passengerSignupRequestDto);
 
-        System.out.println(passenger.getEmail() + "2");
+        //Hash password
+        passenger.setPassword(bCryptPasswordEncoder.encode(passenger.getPassword()));
+
         //save Entity
         Passenger savePassenger = passengerRepository.save(passenger) ;
-        System.out.println(savePassenger.getEmail() + "3");
 
         //Map entity to response Dto
         return passengerMapper.passengerToResponseDto(savePassenger);
