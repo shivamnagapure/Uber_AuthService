@@ -1,10 +1,12 @@
 package UberProject_AuthService.services;
 
+import UberProject_AuthService.models.Booking;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -14,13 +16,13 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
-public class JwtService {
+public class JwtService implements CommandLineRunner {
     // have to get it from application.properties
-    @Value("${jwt.secret}")
-    private long expiration ;
+    @Value("${jwt.expiration}")
+    private Long expiration ;
 
-    @Value("${}jwt.expiration")
-    private String secret;
+    @Value("${jwt.secret}")
+    private  String secret;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
@@ -30,7 +32,7 @@ public class JwtService {
     public String generateToken(Map<String , Object> payload ,  String email){
         return Jwts.builder()
                 .setClaims(payload)
-                .setSubject(email)
+                .setSubject(email) //identify the user uniquely , we pass a property which uniquely identify the user
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey()) // creates the signature ->  using header , payload and key
@@ -65,6 +67,33 @@ public class JwtService {
         return extractClaim(token , Claims::getSubject);
     }
 
+    //return true if token expired
+    public Boolean isTokenExpired(String token){
+        return extractExpiration(token).before(new Date());
+    }
+
     // Validate token
-    
+    public boolean validateToken(String token , String email){
+        //get Subject(email) from token , which uniquely identify user
+        String tokenEmail = extractEmail(token);
+
+        // Check if the token's username matches the given username
+        // AND the token is not expired
+        return (tokenEmail.equals(email) && !isTokenExpired(token));
+    }
+
+     public Object extractPayload(String token , String payload){
+        Claims claims = extractAllClaims(token);
+        return claims.get(payload);
+     }
+
+    @Override
+    public void run(String... args) throws Exception {
+        Map<String, Object> mp = new HashMap<>();
+        mp.put("email", "a@b.com");
+        mp.put("phoneNumber", "9999999999");
+        String result = generateToken(mp , "a@b.com");
+        System.out.println("Generated token is: " + result);
+        System.out.println(extractPayload(result, "email").toString());
+    }
 }
