@@ -1,5 +1,6 @@
 package UberProject_AuthService.configurations;
 
+import UberProject_AuthService.filters.JwtAuthFilter;
 import UberProject_AuthService.services.UserDetailServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -23,6 +25,9 @@ public class SpringSecurity {
     @Autowired
     private UserDetailServiceImpl userDetailService ;
 
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter ;
+
     //Spring Boot autoconfigures default security beans if you don’t provide your own
     //You don’t have to write or inject them manually for basic security to work.
     @Bean
@@ -30,17 +35,26 @@ public class SpringSecurity {
         http
            .csrf(AbstractHttpConfigurer::disable)
            .cors(AbstractHttpConfigurer::disable)
-           .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/signup/**").permitAll()
-                .requestMatchers("/api/v1/auth/signin/**").permitAll()
-                .anyRequest().authenticated()
-           );
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/v1/auth/signup/**").permitAll()
+                    .requestMatchers("/api/v1/auth/signin/**").permitAll()
+                    .requestMatchers("/api/v1/auth/validate").authenticated()
+                    .anyRequest().authenticated()
+            )
+            // Add your JWT filter before UsernamePasswordAuthenticationFilter
+                /*
+                    JWT Filter should check for tokens first
+                    If a valid JWT exists, the user is already authenticated
+                    Only if no valid JWT is found, fall back to username/password authentication
+                 */
+            .addFilterBefore(jwtAuthFilter , UsernamePasswordAuthenticationFilter.class);
+        System.out.println("filterChain");
         return http.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception{
-        System.out.println("Done");
+        System.out.println("authenticationManager");
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
 
         authenticationManagerBuilder
@@ -54,17 +68,4 @@ public class SpringSecurity {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:5173") // frontend origin
-                        .allowedMethods("*")
-                        .allowedHeaders("*")
-                        .allowCredentials(true); // needed for HttpOnly cookie
-            }
-        };
-    }
 }

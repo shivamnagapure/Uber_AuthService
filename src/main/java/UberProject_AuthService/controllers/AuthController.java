@@ -5,6 +5,8 @@ import UberProject_AuthService.dtos.PassengerSignUpResponseDto;
 import UberProject_AuthService.dtos.PassengerSignupRequestDto;
 import UberProject_AuthService.services.AuthService;
 import UberProject_AuthService.services.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -12,10 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -53,8 +54,8 @@ public class AuthController {
 
             //Create Cookie
             ResponseCookie cookie = ResponseCookie.from("jwt" , token)
-                    .httpOnly(false) // prevent JS access
-                    .secure(false)   //use only with HTTPS
+                    .httpOnly(true) // prevent JS access
+                    .secure(true)   //use only with HTTPS
                     .path("/")      //cookie is valid for all endpoints
                     .maxAge(24 * 60 * 60) //cookie expiration time
                     .sameSite("Strict")  // CSRF protection
@@ -69,5 +70,14 @@ public class AuthController {
             System.out.println("VAA");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
         }
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validate(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("Inside validate controller");
+        for(Cookie cookie: request.getCookies()) {
+            System.out.println(cookie.getName() + " " + cookie.getValue());
+        }
+        return new ResponseEntity<>("Success", HttpStatus.OK);
     }
 }
