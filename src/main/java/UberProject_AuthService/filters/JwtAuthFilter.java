@@ -1,7 +1,6 @@
 package UberProject_AuthService.filters;
 
 import UberProject_AuthService.services.JwtService;
-import UberProject_AuthService.services.UserDetailServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
