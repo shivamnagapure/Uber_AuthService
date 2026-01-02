@@ -6,9 +6,10 @@ import UberProject_AuthService.models.Passenger;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring" )
 public interface PassengerMapper {
 
+    @Mapping(target = "bookings", ignore = true)
     Passenger passengerSignUpReqToPassenger(PassengerSignupRequestDto passengerSignupRequestDto);
 
     PassengerSignUpResponseDto passengerToResponseDto(Passenger passenger);

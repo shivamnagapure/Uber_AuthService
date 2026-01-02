@@ -50,10 +50,11 @@ public class SpringSecurity {
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception{
         System.out.println("authenticationManager");
+        //Build Authentication Manager , and configure it (means, tells it where to get user data , how to encode password , which authenticationProvider to use)
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
 
         authenticationManagerBuilder
-                .userDetailsService(userDetailService)
+                .userDetailsService(userDetailService) //
                 .passwordEncoder(bCryptPasswordEncoder());
         return authenticationManagerBuilder.build();
     }
